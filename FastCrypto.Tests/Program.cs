@@ -36,6 +36,7 @@ public class CryptoTest {
         _bytes2 = new byte[1024];
     }
 
+    
     [Benchmark]
     public void FastCrypto_RC4() {
         _fastRC4.ProcessBytes(_bytes1, 0, _bytes1.Length);

@@ -89,8 +89,16 @@ namespace FastCrypto {
             
             _x = _y = 0;
 
-            for (int i = 0; i < StateLength; i++) {
+            // loop unrolling
+            for (int i = 0; i < StateLength / 8; i += 8) {
                 _state[i] = (byte)i;
+                _state[i + 1] = (byte)(i + 1);
+                _state[i + 2] = (byte)(i + 2);
+                _state[i + 3] = (byte)(i + 3);
+                _state[i + 4] = (byte)(i + 4);
+                _state[i + 5] = (byte)(i + 5);
+                _state[i + 6] = (byte)(i + 6);
+                _state[i + 7] = (byte)(i + 7);
             }
 
             for (int i = 0, j = 0, k = 0; i < StateLength; i++) {
