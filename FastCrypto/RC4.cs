@@ -95,8 +95,7 @@ namespace FastCrypto {
 
             for (int i = 0, j = 0, k = 0; i < StateLength; i++) {
                 byte tmp = _state[i];
-                k = ((keyBytes[j] & 0xff) + tmp + k) & 0xff;
-                _state[i] = _state[k];
+                _state[i] = _state[k = ((keyBytes[j] & 0xff) + tmp + k) & 0xff];
                 _state[k] = tmp;
                 j = (j + 1) % keyBytes.Length;
             }
