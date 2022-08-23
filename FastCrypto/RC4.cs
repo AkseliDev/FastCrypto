@@ -11,6 +11,7 @@ namespace FastCrypto {
     /// </summary>
     public class RC4 {
 
+        // StateLength should always be dividable by 8
         private const int StateLength = 256;
 
         private byte[] _state;
