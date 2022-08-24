@@ -11,7 +11,6 @@ namespace FastCrypto {
     /// </summary>
     public class RC4 {
 
-        // StateLength should always be dividable by 8
         private const int StateLength = 256;
 
         private byte[] _state;
@@ -39,47 +38,49 @@ namespace FastCrypto {
         /// <param name="length">The amount of bytes to encrypt</param>
         /// <param name="offset">The offset in the buffer where to start encrypting</param>
         /// <exception cref="ArgumentOutOfRangeException">If the input buffer is too short</exception>
-        public void ProcessBytes(byte[] input, int offset, int length) {
+        public void ProcessBytes(byte[] input, int offset, int length) => ProcessBytes(input.AsSpan(offset, length));
 
-            if (length + offset > input.Length) {
-                throw new ArgumentOutOfRangeException("input buffer is too short");
+        /// <summary>
+        /// Encrypts a block of bytes
+        /// </summary>
+        /// <param name="input">The block of bytes to encrypt</param>
+        /// <exception cref="ArgumentOutOfRangeException">If the input buffer is too short</exception>
+        public void ProcessBytes(Span<byte> input) {
+
+            /**
+             * Using a span is faster than a fixed block + pointers because of pinning overhead, 
+             * also its not unsafe which is a plus
+             */
+
+            // create local copies of the x,y states
+            int x = _x;
+            int y = _y;
+
+            // if we create a span from 0 to StateLength (256)
+            // the JIT compiler can remove bounds checks
+            Span<byte> engine = _state.AsSpan(0, StateLength);
+
+            // array bounds checks can be removed
+            for (int i = 0; i < input.Length; i++) {
+
+                // optimized operations
+                // removed unnecessary array accesses
+
+                byte xState = engine[x = (x + 1) & 0xff];
+                byte yState = engine[y = (xState + y) & 0xff];
+
+                engine[x] = yState;
+                engine[y] = xState;
+
+                input[i] ^= engine[(yState + xState) & 0xff];
+
+
             }
 
-            unsafe {
-                // pin both, the engine state and input
-                // to local fixed buffers
-                fixed (byte* engine = _state, pointer = input) {
+            // return the state
+            _x = x;
+            _y = y;
 
-                    byte* ptr = (pointer + offset);
-
-                    // create local copies of the x,y states
-                    // because accessing locals is faster
-                    int x = _x;
-                    int y = _y;
-
-                    // reverse loop is faster because the length needs to be read only once
-                    for (int i = length; i > 0; i--) {
-
-                        // optimized operations
-                        // removed unnecessary array accesses
-
-                        byte xState = engine[x = (x + 1) & 0xff];
-                        byte yState = engine[y = (xState + y) & 0xff];
-
-                        engine[x] = yState;
-                        engine[y] = xState;
-
-                        *ptr ^= engine[(yState + xState) & 0xff];
-
-                        // point to the next index
-                        ptr++;
-                    }
-
-                    // return the state
-                    _x = x;
-                    _y = y;
-                }
-            }
         }
 
         /// <summary>
@@ -90,16 +91,9 @@ namespace FastCrypto {
             
             _x = _y = 0;
 
-            // loop unrolling
-            for (int i = 0; i < StateLength / 8; i += 8) {
+            // not worth to unroll
+            for (int i = 0; i < _state.Length; i++) {
                 _state[i] = (byte)i;
-                _state[i + 1] = (byte)(i + 1);
-                _state[i + 2] = (byte)(i + 2);
-                _state[i + 3] = (byte)(i + 3);
-                _state[i + 4] = (byte)(i + 4);
-                _state[i + 5] = (byte)(i + 5);
-                _state[i + 6] = (byte)(i + 6);
-                _state[i + 7] = (byte)(i + 7);
             }
 
             for (int i = 0, j = 0, k = 0; i < StateLength; i++) {
