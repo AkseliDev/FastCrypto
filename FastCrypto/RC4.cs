@@ -13,8 +13,8 @@ namespace FastCrypto {
 
         private const int StateLength = 256;
 
-        private byte[] _state;
-        private byte[] _key;
+        private readonly byte[] _state;
+        private readonly byte[] _key;
         private int _x;
         private int _y;
 
