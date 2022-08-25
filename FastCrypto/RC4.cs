@@ -72,7 +72,8 @@ namespace FastCrypto {
                 engine[x] = yState;
                 engine[y] = xState;
 
-                input[i] ^= engine[(yState + xState) & 0xff];
+                byte value = engine[(yState + xState) & 0xff];
+                input[i] ^= value;
 
 
             }
